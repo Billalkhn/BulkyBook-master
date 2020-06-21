@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BulkyBook.Areas.Admin.Controllers
 {
+    //company controller
     [Area("Admin")]
     public class CompanyController : Controller
     {
