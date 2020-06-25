@@ -16,6 +16,8 @@ using BulkyBook.DataAccess.Repository.IRepository;
 using BulkyBook.DataAccess.Repository;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using BulkyBook.Utility;
+using Microsoft.Extensions.Options;
+using Microsoft.CodeAnalysis.Options;
 
 namespace BulkyBook
 {
@@ -39,6 +41,22 @@ namespace BulkyBook
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddControllersWithViews().AddRazorRuntimeCompilation();
             services.AddRazorPages();
+            services.ConfigureApplicationCookie(options =>
+            {
+                options.LoginPath = $"/Identity/Account/Login";
+                options.LogoutPath = $"/Identity/Account/Logout";
+                options.AccessDeniedPath = $"/Identity/Account/AccessDenied";
+            });
+            services.AddAuthentication().AddFacebook(Options =>
+            {
+                Options.AppId = "1330265493830853";
+                Options.AppSecret = "559841d3a731eb0adfa70e8d5de9389c";
+            });
+            services.AddAuthentication().AddGoogle(Options =>
+            {
+                Options.ClientId = "482314339576-dgs233a3r0mon9matehhg36brii81tu7.apps.googleusercontent.com";
+                Options.ClientSecret = "2vPxJv3w-hiR062vBvHA7voZ";
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
