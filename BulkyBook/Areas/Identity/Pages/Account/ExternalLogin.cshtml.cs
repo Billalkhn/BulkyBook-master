@@ -41,7 +41,7 @@ namespace BulkyBook.Areas.Identity.Pages.Account
         [BindProperty]
         public InputModel Input { get; set; }
 
-        public string ProviderDisplayName { get; set; }
+        public string LoginProvider { get; set; }
 
         public string ReturnUrl { get; set; }
 
@@ -53,8 +53,8 @@ namespace BulkyBook.Areas.Identity.Pages.Account
             [Required]
             [EmailAddress]
             public string Email { get; set; }
-            [Required]
 
+            [Required]
             public string Name { get; set; }
             public string StreetAddress { get; set; }
             public string City { get; set; }
@@ -82,7 +82,7 @@ namespace BulkyBook.Areas.Identity.Pages.Account
             if (remoteError != null)
             {
                 ErrorMessage = $"Error from external provider: {remoteError}";
-                return RedirectToPage("./Login", new {ReturnUrl = returnUrl });
+                return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
             }
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
@@ -92,7 +92,7 @@ namespace BulkyBook.Areas.Identity.Pages.Account
             }
 
             // Sign in the user with this external login provider if the user already has a login.
-            var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor : true);
+            var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
             if (result.Succeeded)
             {
                 _logger.LogInformation("{Name} logged in with {LoginProvider} provider.", info.Principal.Identity.Name, info.LoginProvider);
@@ -106,13 +106,13 @@ namespace BulkyBook.Areas.Identity.Pages.Account
             {
                 // If the user does not have an account, then ask the user to create an account.
                 ReturnUrl = returnUrl;
-                ProviderDisplayName = info.ProviderDisplayName;
+                LoginProvider = info.LoginProvider;
                 if (info.Principal.HasClaim(c => c.Type == ClaimTypes.Email))
                 {
                     Input = new InputModel
                     {
                         Email = info.Principal.FindFirstValue(ClaimTypes.Email),
-                        Name=info.Principal.FindFirstValue(ClaimTypes.Name)
+                        Name = info.Principal.FindFirstValue(ClaimTypes.Name)
                     };
                 }
                 return Page();
@@ -136,16 +136,13 @@ namespace BulkyBook.Areas.Identity.Pages.Account
                 {
                     UserName = Input.Email,
                     Email = Input.Email,
-                    
                     StreetAddress = Input.StreetAddress,
                     City = Input.City,
                     State = Input.State,
                     PostalCode = Input.PostalCode,
                     Name = Input.Name,
                     PhoneNumber = Input.PhoneNumber,
-                   
                 };
-
                 var result = await _userManager.CreateAsync(user);
                 if (result.Succeeded)
                 {
@@ -153,6 +150,7 @@ namespace BulkyBook.Areas.Identity.Pages.Account
                     result = await _userManager.AddLoginAsync(user, info);
                     if (result.Succeeded)
                     {
+                        await _signInManager.SignInAsync(user, isPersistent: false);
                         _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
 
                         var userId = await _userManager.GetUserIdAsync(user);
@@ -167,14 +165,6 @@ namespace BulkyBook.Areas.Identity.Pages.Account
                         await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
                             $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
-                        // If account confirmation is required, we need to show the link if we don't have a real email sender
-                        if (_userManager.Options.SignIn.RequireConfirmedAccount)
-                        {
-                            return RedirectToPage("./RegisterConfirmation", new { Email = Input.Email });
-                        }
-
-                        await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
-
                         return LocalRedirect(returnUrl);
                     }
                 }
@@ -184,7 +174,7 @@ namespace BulkyBook.Areas.Identity.Pages.Account
                 }
             }
 
-            ProviderDisplayName = info.ProviderDisplayName;
+            LoginProvider = info.LoginProvider;
             ReturnUrl = returnUrl;
             return Page();
         }
